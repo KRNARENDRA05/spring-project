@@ -9,7 +9,7 @@ pipeline {
            }
            else { // this is a PR build, run sonar analysis
               withSonarQubeEnv('SonarGate') {
-                 sh "../../../sonar-scanner-2.9.0.670/bin/sonar-scanner"   
+                echo "In 'develop' branch, need to analyze." 
               }
            }
         }
