@@ -1,25 +1,43 @@
 pipeline {
-  agent none
-  stages {
-    stage('SCM operation') {
-      agent {
-        label 'SlaveSCMConnected'
-      }
-      steps {
-        checkout scm
-        sh 'mvn clean install'
-      }
+    agent {
+        docker {
+            image 'node:6-alpine'
+            args '-p 3000:3000 -p 5000:5000'
+        }
     }
-    stage('Operation without SCM') {
-      agent {
-        label 'SlaveWithoutConnectionToSCM'
-      }
-      steps {
-        mail(to: 'devops@acme.com', subject: "Job '${env.JOB_NAME}' (${env.BUILD_NUMBER}) is waiting for input", body: "Please go to ${env.BUILD_URL}.")
-      }
+    environment {
+        CI = 'true'
     }
-  }
-  options {
-    skipDefaultCheckout()
-  }
+    stages {
+        stage('Build') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh './jenkins/scripts/test.sh'
+            }
+        }
+        stage('Deliver for development') {
+            when {
+                branch 'development' 
+            }
+            steps {
+                sh './jenkins/scripts/deliver-for-development.sh'
+                input message: 'Finished using the web site? (Click "Proceed" to continue)'
+                sh './jenkins/scripts/kill.sh'
+            }
+        }
+        stage('Deploy for production') {
+            when {
+                branch 'production'  
+            }
+            steps {
+                sh './jenkins/scripts/deploy-for-production.sh'
+                input message: 'Finished using the web site? (Click "Proceed" to continue)'
+                sh './jenkins/scripts/kill.sh'
+            }
+        }
+    }
 }
