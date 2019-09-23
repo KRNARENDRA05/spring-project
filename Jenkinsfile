@@ -1,4 +1,5 @@
-node('master'){
+pipeline {
+  node('master'){
   stage('Build'){
     sh"echo Build"
   }stage('Test'){
@@ -33,4 +34,5 @@ node('master'){
   }stage('Production'){
     sh"echo Production"
   }
+}
 }
