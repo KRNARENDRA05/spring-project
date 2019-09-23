@@ -1,17 +1,23 @@
-pipeline{
-  stage('SonarQube analysis'){
-    steps{
-      script{
-        STAGE_NAME='SonarQube analysis'if(BRANCH_NAME=='develop'){
-          echo"In develop branch, dont analyze."
-        }else{
-          //thisisaPRbuild,
-          runsonaranalysiswithSonarQubeEnv('SonarGate'){
-            echo"In branch, need to analyze."
-          }
-        }
+pipeline {
+  agent none
+  options { 
+      skipDefaultCheckout() 
+  }
+  stages{
+    stage('SCM operation'){
+      agent {label 'SlaveSCMConnected'}
+      steps{
+        checkout scm
+        sh 'mvn clean install'
       }
-    }
+   }
+    stage('Operation without SCM'){
+      agent {label 'SlaveWithoutConnectionToSCM'}
+      steps{
+        mail (to: 'devops@acme.com',
+             subject: "Job '${env.JOB_NAME}' (${env.BUILD_NUMBER}) is waiting for input",
+            body: "Please go to ${env.BUILD_URL}.");
+      }
+   }
   }
 }
-
